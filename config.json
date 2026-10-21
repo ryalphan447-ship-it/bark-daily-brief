@@ -1,0 +1,12 @@
+{
+  "title": "早间新闻简报",
+  "lookback_hours": 24,
+  "max_items": 12,
+  "per_source": 4,
+  "summary_chars": 120,
+  "feeds": [
+    {"name": "联合国新闻", "url": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml", "category": "国际"},
+    {"name": "BBC 中文", "url": "https://feeds.bbci.co.uk/zhongwen/simp/rss.xml", "category": "综合"},
+    {"name": "IT之家", "url": "https://www.ithome.com/rss/", "category": "科技"}
+  ]
+}

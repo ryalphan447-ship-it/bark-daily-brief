@@ -1,0 +1,58 @@
+name: Daily Bark Brief
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # UTC 01:00 = 北京时间 09:00，可能排队延迟
+  workflow_dispatch:
+    inputs:
+      send_notification:
+        description: '发布成功后发送 Bark 通知'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-bark-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test parser and notification safety
+        run: python -m unittest discover -s tests -v
+      - name: Generate public news page
+        run: python brief.py build
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload only rendered public website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+          retention-days: 1
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify website and send Bark
+        if: github.event_name == 'schedule' || inputs.send_notification
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python brief.py notify
